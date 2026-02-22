@@ -8,8 +8,8 @@ CPTCA provides a unified application experience for Cornell project teams (analo
 
 **User Roles:**
 - **Students (Applicants)** — Browse teams, apply, track status, message teams
-- **Team Owners** — Manage applications, configure deadlines, set custom questions, assign reviewers
-- **Reviewers** — View assigned team's applications and message applicants
+- **Team Owners** — Manage applications, configure deadlines, set custom questions, assign reviewers, write internal notes
+- **Reviewers** — View assigned team's applications, message applicants, write internal notes
 
 ## Tech Stack
 
@@ -28,11 +28,14 @@ CPTCA provides a unified application experience for Cornell project teams (analo
 - **Team Discovery** — Browse all Cornell project teams with category filtering and animated showcase carousel
 - **Dynamic Application Forms** — Each team defines custom essay questions stored as JSONB; the form engine renders them dynamically
 - **Application Lifecycle** — Draft → Submitted → Interviewing → Accepted/Rejected with deadline enforcement
-- **Per-Application Messaging** — Bidirectional message threads between applicants and team members
-- **Admin Dashboard** — Tabbed status view, reviewer assignment, separate upperclassman/lowerclassman deadlines
-- **Email Notifications** — AWS SES notifications on status changes and new messages
+- **Per-Application Messaging** — Bidirectional message threads between applicants and team members, with email notifications via AWS SES
+- **Internal Notes** — Team owners and reviewers can write, edit, and delete private per-application notes; note counts visible in the admin dashboard
+- **Admin Dashboard** — Tabbed status filtering, message and note count badges per applicant row, reviewer assignment, separate upperclassman/lowerclassman deadlines
+- **Email Notifications** — AWS SES notifications on status changes and new messages (team → applicant and applicant → team)
 - **Role-Based Access Control** — Row-Level Security (RLS) policies enforce data isolation between users/teams
-- **Cornell Branding** — Red (`#B31B1B`) color scheme, Duffield Engineering logos, NetID-based identity
+- **Cornell Branding** — Red (`#B31B1B`) color scheme, Cornell and Duffield Engineering logos, NetID-based identity
+- **Mobile Responsive** — Hamburger nav, responsive admin table, mobile-first layout throughout
+- **Resume Link** — Students can paste a resume URL (Google Drive, Dropbox, etc.) on their profile; viewable by team owners and reviewers on the review page
 
 ## Project Structure
 
@@ -50,12 +53,12 @@ bigredcommonapp/
 │   ├── signup/               # Registration page
 │   └── profile/create/       # Post-signup profile setup
 ├── components/               # Reusable UI components
-│   ├── admin/                # Admin dashboard components
+│   ├── admin/                # Admin dashboard components (notes panel, status changer, reviewer manager)
 │   ├── applications/         # Application form + status badge
 │   ├── auth/                 # Login/signup forms
 │   ├── layout/               # Header, mobile nav, user dropdown
 │   ├── messages/             # Message thread UI
-│   ├── profile/              # Profile form + resume upload
+│   ├── profile/              # Profile form
 │   ├── teams/                # Team card + marquee
 │   └── ui/                   # shadcn/ui primitives
 ├── lib/
@@ -64,9 +67,9 @@ bigredcommonapp/
 │   ├── supabase/             # Supabase client (browser, server, admin)
 │   └── validations/          # Zod schemas
 ├── types/
-│   └── database.ts           # Generated Supabase database types
+│   └── database.ts           # Supabase database types
 ├── supabase/
-│   ├── migrations/           # 12 SQL migration files
+│   ├── migrations/           # 14 SQL migration files
 │   └── seed.sql              # Seed data
 └── middleware.ts             # Route protection + session refresh
 ```
@@ -76,16 +79,19 @@ bigredcommonapp/
 | Table | Purpose |
 |-------|---------|
 | `profiles` | Student profiles (NetID, email, major, GPA, resume URL) |
-| `teams` | Team metadata + `custom_questions` JSONB array |
-| `team_members` | Reviewer/admin role assignments |
+| `teams` | Team metadata + `custom_questions` JSONB array + deadlines |
+| `team_members` | Reviewer role assignments |
 | `applications` | Applications with `answers` JSONB + status enum |
 | `messages` | Per-application message threads |
+| `notes` | Internal per-application notes for team owners and reviewers |
 
 **Key design decisions:**
 - `teams.custom_questions` — JSONB array of question objects (label, type, required)
 - `applications.answers` — JSONB key-value map of question ID → answer
+- `teams.upperclassman_deadline` / `teams.lowerclassman_deadline` — separate deadlines per class standing
 - Cornell NetID is the primary human identifier for students
 - All tables use Row-Level Security; students only see their own data
+- Supabase admin client initialized lazily (function-scoped) to prevent build-time errors on Vercel
 
 ## Getting Started
 
@@ -153,7 +159,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Application Flow
 
 ```
-Student signs up → Creates profile (NetID, major, etc.)
+Student signs up → Creates profile (NetID, major, GPA, resume link, etc.)
        ↓
 Browses teams → Views team details & custom questions
        ↓
@@ -161,12 +167,12 @@ Starts application (saved as Draft)
        ↓
 Submits before deadline → Status: Submitted
        ↓
-Team owner reviews → Updates status (Interviewing / Accepted / Rejected)
+Team owner reviews → Writes internal notes → Updates status (Interviewing / Accepted / Rejected)
        ↓
 Email notification sent to student at each status change
 ```
 
-**Messaging** is available at any point after an application is submitted, allowing back-and-forth between the applicant and the team.
+**Messaging** is available at any point after an application is submitted, allowing back-and-forth between the applicant and the team. Both sides receive email notifications on new messages.
 
 ## Key Patterns
 
@@ -178,15 +184,15 @@ Email notification sent to student at each status change
 
 **Role checks** — RLS policies enforce all authorization. The `team_members` table controls reviewer access; `teams.owner_id` controls admin access.
 
+**Lazy admin client** — `getSupabaseAdmin()` creates the service-role Supabase client on demand inside server functions, avoiding module-level initialization errors during Vercel builds.
+
 ## Deployment
 
-The recommended deployment target is [Vercel](https://vercel.com). Set all environment variables in the Vercel project settings.
+The recommended deployment target is [Vercel](https://vercel.com). Set all environment variables in the Vercel project settings before deploying.
 
 For email: AWS SES must be moved out of sandbox mode (domain verification + production access request) before sending to unverified addresses.
 
 ## Known Limitations / TODO
 
-- [ ] Resume upload to Supabase Storage (UI exists, backend not wired)
-- [ ] Resume viewing/downloading by team owners
 - [ ] AWS SES production access (currently sandbox — only verified emails receive notifications)
 - [ ] Notification preferences / unsubscribe
