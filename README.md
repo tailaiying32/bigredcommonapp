@@ -1,4 +1,4 @@
-# Cornell Project Team Common App (CPTCA)
+# BigRed Common App
 
 A centralized application platform for Cornell University project teams — built to streamline how students discover teams, apply, and how team leaders manage applicants.
 
