@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { buildApplicationSchema } from "@/lib/validations/application";
 import {
   createApplication,
@@ -20,6 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { TeamQuestion, Application } from "@/types/database";
 
 interface ApplicationFormProps {
@@ -33,12 +45,17 @@ export function ApplicationForm({
   questions,
   existingApplication,
 }: ApplicationFormProps) {
+  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverSuccess, setServerSuccess] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingSubmitValues, setPendingSubmitValues] = useState<Record<
+    string,
+    string
+  > | null>(null);
 
   const isReadOnly =
     !!existingApplication && existingApplication.status !== "draft";
-  const isDraft = existingApplication?.status === "draft";
 
   const schema = buildApplicationSchema(questions);
   const existingAnswers = (existingApplication?.answers ?? {}) as Record<
@@ -78,7 +95,8 @@ export function ApplicationForm({
       if (result.error) {
         setServerError(result.error);
       } else {
-        setServerSuccess("Draft created! Reload to continue editing.");
+        setServerSuccess("Draft created!");
+        router.refresh();
       }
     }
   }
@@ -87,143 +105,178 @@ export function ApplicationForm({
     setServerError(null);
     setServerSuccess(null);
 
-    if (!existingApplication) {
-      // Create first, then submit
+    let applicationId = existingApplication?.id;
+
+    // If no existing application, create one first
+    if (!applicationId) {
       const createResult = await createApplication(teamId, values);
       if (createResult.error) {
         setServerError(createResult.error);
         return;
       }
-      setServerSuccess(
-        "Application created! Reload the page and submit again."
-      );
-      return;
+      applicationId = createResult.applicationId;
+    } else {
+      // Save latest answers
+      const updateResult = await updateApplication(applicationId, values);
+      if (updateResult.error) {
+        setServerError(updateResult.error);
+        return;
+      }
     }
 
-    // Save latest answers first
-    const updateResult = await updateApplication(
-      existingApplication.id,
-      values
-    );
-    if (updateResult.error) {
-      setServerError(updateResult.error);
-      return;
-    }
-
-    // Then submit
-    const submitResult = await submitApplication(
-      existingApplication.id,
-      questions
-    );
+    // Submit
+    const submitResult = await submitApplication(applicationId!, questions);
     if (submitResult.error) {
       setServerError(submitResult.error);
     } else {
       setServerSuccess("Application submitted!");
+      router.refresh();
+    }
+  }
+
+  function handleSubmitClick() {
+    handleSubmit((values) => {
+      setPendingSubmitValues(values as Record<string, string>);
+      setShowConfirmDialog(true);
+    })();
+  }
+
+  async function handleConfirmSubmit() {
+    if (pendingSubmitValues) {
+      await onSubmit(pendingSubmitValues);
+      setPendingSubmitValues(null);
     }
   }
 
   return (
-    <form className="space-y-6">
-      {questions.map((q) => (
-        <div key={q.id} className="space-y-2">
-          <Label htmlFor={q.id}>
-            {q.label}
-            {q.required && <span className="text-destructive ml-1">*</span>}
-          </Label>
+    <>
+      <form className="space-y-6">
+        {questions.map((q) => (
+          <div key={q.id} className="space-y-2">
+            <Label htmlFor={q.id}>
+              {q.label}
+              {q.required && <span className="text-destructive ml-1">*</span>}
+            </Label>
 
-          {q.type === "text" && (
-            <Input
-              id={q.id}
-              {...register(q.id)}
-              disabled={isReadOnly}
-              placeholder="Your answer..."
-            />
-          )}
+            {q.type === "text" && (
+              <Input
+                id={q.id}
+                {...register(q.id)}
+                disabled={isReadOnly}
+                placeholder="Your answer..."
+              />
+            )}
 
-          {q.type === "textarea" && (
-            <Textarea
-              id={q.id}
-              {...register(q.id)}
-              disabled={isReadOnly}
-              placeholder="Your answer..."
-              rows={4}
-            />
-          )}
+            {q.type === "textarea" && (
+              <Textarea
+                id={q.id}
+                {...register(q.id)}
+                disabled={isReadOnly}
+                placeholder="Your answer..."
+                rows={4}
+              />
+            )}
 
-          {q.type === "select" && (
-            <Select
-              value={(watch(q.id) as string) ?? ""}
-              onValueChange={(val) => setValue(q.id, val)}
-              disabled={isReadOnly}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an option..." />
-              </SelectTrigger>
-              <SelectContent>
-                {q.options?.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+            {q.type === "select" && (
+              <Select
+                value={(watch(q.id) as string) ?? ""}
+                onValueChange={(val) => setValue(q.id, val)}
+                disabled={isReadOnly}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an option..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {q.options?.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-          {errors[q.id] && (
-            <p className="text-sm text-destructive">
-              {errors[q.id]?.message as string}
-            </p>
-          )}
-        </div>
-      ))}
+            {errors[q.id] && (
+              <p className="text-sm text-destructive">
+                {errors[q.id]?.message as string}
+              </p>
+            )}
+          </div>
+        ))}
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
-      {serverSuccess && (
-        <p className="text-sm text-green-600">{serverSuccess}</p>
-      )}
+        {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+        {serverSuccess && (
+          <p className="text-sm text-green-600">{serverSuccess}</p>
+        )}
 
-      {!isReadOnly && (
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isSubmitting}
-            onClick={handleSubmit(
-              (values) => onSaveDraft(values as Record<string, string>),
-              // Allow saving draft even with validation errors
-              () => {
-                const formValues: Record<string, string> = {};
-                for (const q of questions) {
-                  formValues[q.id] = (watch(q.id) as string) ?? "";
+        {!isReadOnly && (
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={handleSubmit(
+                (values) => onSaveDraft(values as Record<string, string>),
+                () => {
+                  const formValues: Record<string, string> = {};
+                  for (const q of questions) {
+                    formValues[q.id] = (watch(q.id) as string) ?? "";
+                  }
+                  onSaveDraft(formValues);
                 }
-                onSaveDraft(formValues);
-              }
-            )}
-          >
-            {isSubmitting ? "Saving..." : "Save Draft"}
-          </Button>
-          <Button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleSubmit((values) =>
-              onSubmit(values as Record<string, string>)
-            )}
-          >
-            {isSubmitting
-              ? "Submitting..."
-              : isDraft
-                ? "Submit Application"
-                : "Apply"}
-          </Button>
-        </div>
-      )}
+              )}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Draft"
+              )}
+            </Button>
+            <Button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSubmitClick}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Application"
+              )}
+            </Button>
+          </div>
+        )}
 
-      {isReadOnly && (
-        <p className="text-sm text-muted-foreground">
-          This application has been {existingApplication?.status} and can no
-          longer be edited.
-        </p>
-      )}
-    </form>
+        {isReadOnly && (
+          <p className="text-sm text-muted-foreground">
+            This application has been {existingApplication?.status} and can no
+            longer be edited.
+          </p>
+        )}
+      </form>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit application?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure? Once submitted, you won&apos;t be able to edit your
+              answers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit}>
+              Submit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

@@ -12,7 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { TeamQuestion, Application } from "@/types/database";
+import { MessageThread } from "@/components/messages/message-thread";
+import { getMessages } from "@/lib/actions/messages";
+import type { TeamQuestion, Application, Message } from "@/types/database";
 import { ExternalLink } from "lucide-react";
 
 export async function generateMetadata({
@@ -64,6 +66,13 @@ export default async function TeamDetailPage({
       .eq("student_id", user.id)
       .single();
     existingApp = data;
+  }
+
+  // Fetch messages for submitted applications
+  let messages: Message[] = [];
+  if (existingApp && existingApp.status !== "draft") {
+    const result = await getMessages(existingApp.id);
+    messages = result.messages;
   }
 
   return (
@@ -122,6 +131,22 @@ export default async function TeamDetailPage({
           )}
         </CardContent>
       </Card>
+
+      {user && existingApp && existingApp.status !== "draft" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Messages</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MessageThread
+              applicationId={existingApp.id}
+              currentUserId={user.id}
+              canSend={true}
+              initialMessages={messages}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

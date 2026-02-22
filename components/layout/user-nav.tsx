@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { signOut } from "@/lib/actions/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -16,9 +17,10 @@ interface UserNavProps {
   name: string;
   email: string;
   netid?: string;
+  hasProfile?: boolean;
 }
 
-export function UserNav({ name, email, netid }: UserNavProps) {
+export function UserNav({ name, email, netid, hasProfile }: UserNavProps) {
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -44,6 +46,11 @@ export function UserNav({ name, email, netid }: UserNavProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {hasProfile && (
+          <DropdownMenuItem asChild>
+            <Link href="/profile/edit">Edit Profile</Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <form action={signOut} className="w-full">
             <button type="submit" className="w-full text-left">

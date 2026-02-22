@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/applications/status-badge";
+import { getMessageCounts } from "@/lib/actions/messages";
+import { Badge } from "@/components/ui/badge";
+import { MessageSquare } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -48,9 +51,12 @@ export default async function ApplicationsPage() {
     : { data: [] };
   const teamMap = new Map((teams ?? []).map((t) => [t.id, t.name]));
 
+  const messageCounts = await getMessageCounts(appRows.map((a) => a.id));
+
   const apps = appRows.map((a) => ({
     ...a,
     team_name: teamMap.get(a.team_id) ?? "Unknown Team",
+    message_count: messageCounts[a.id] ?? 0,
   }));
 
   return (
@@ -82,6 +88,7 @@ export default async function ApplicationsPage() {
                 <TableRow>
                   <TableHead>Team</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Messages</TableHead>
                   <TableHead>Last Updated</TableHead>
                 </TableRow>
               </TableHeader>
@@ -101,6 +108,14 @@ export default async function ApplicationsPage() {
                         <StatusBadge
                           status={app.status as ApplicationStatus}
                         />
+                      </TableCell>
+                      <TableCell>
+                        {app.message_count > 0 && (
+                          <Badge variant="secondary" className="gap-1">
+                            <MessageSquare className="size-3" />
+                            {app.message_count}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(app.updated_at).toLocaleDateString()}

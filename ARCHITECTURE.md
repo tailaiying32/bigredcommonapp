@@ -1,11 +1,16 @@
 # ARCHITECTURE: Cornell Common (Project Team Unified Application)
 
 ## 1. System Overview
-Cornell Common is a centralized application platform designed to replace the fragmented Google Form/website ecosystem used by Cornell project teams. 
+Cornell Common is a centralized application platform designed to replace the fragmented Google Form/website ecosystem used by Cornell project teams.
 
 ### Core Personas
 - **Applicants:** Students seeking to join teams. They maintain one "Global Profile" and submit team-specific responses.
-- **Team Leads:** Reviewers who manage their team’s presence, define custom questions, and track applicant statuses.
+- **Team Accounts:** Institutional accounts (e.g., `dti@cornell.edu`) that own a single team. Full admin access: review applications, change statuses, message applicants.
+- **Reviewers:** Student accounts granted read-only access to a team's admin page. They can still browse teams and apply to other teams on the side.
+
+### Account Model
+- **Team accounts** have a 1:1 relationship with a team via `teams.owner_id`. They do not have a student profile. They only see their own team's admin page.
+- **Reviewer accounts** are regular student accounts with an entry in `team_members`. They see the full student nav (Teams, My Applications) plus a "(Reviewer)" link to the team's admin page (read-only, no status changes).
 
 ---
 
@@ -14,6 +19,7 @@ Cornell Common is a centralized application platform designed to replace the fra
 - **UI Components:** shadcn/ui (Radix UI)
 - **State & Forms:** React Hook Form + Zod (for strict validation)
 - **Backend/Database:** Supabase (PostgreSQL + Auth + Storage)
+- **Email:** Supabase Edge Functions + Resend (or similar)
 - **Icons:** Lucide React
 
 ---
@@ -42,18 +48,40 @@ Stores team-specific metadata and their dynamic form structure.
 | `description`| text | Markdown-supported team bio |
 | `category` | string | e.g., Engineering, Business, Social |
 | `website` | text | External link to team site |
-| `questions` | jsonb | Array of objects: `[{id, label, type, required}]` |
+| `owner_id` | uuid | Foreign Key -> auth.users (the team's account) |
+| `custom_questions` | jsonb | Array of objects: `[{id, label, type, required, options?}]` |
 
-### 3.3 Applications Table
+### 3.3 Team Members Table
+Stores reviewer assignments (student accounts with read access to a team's admin page).
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | uuid | Primary Key |
+| `team_id` | uuid | Foreign Key -> Teams |
+| `user_id` | uuid | Foreign Key -> auth.users |
+| `role` | team_role | Currently only `reviewer` (admin is via `teams.owner_id`) |
+
+### 3.4 Applications Table
 The join table linking students to teams.
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `id` | uuid | Primary Key |
-| `student_id` | uuid | Foreign Key -> Profiles |
+| `student_id` | uuid | Foreign Key -> auth.users |
 | `team_id` | uuid | Foreign Key -> Teams |
 | `status` | enum | `draft`, `submitted`, `interviewing`, `accepted`, `rejected` |
 | `answers` | jsonb | Key-value pairs: `{"q1": "Answer string"}` |
-| `created_at` | timestamp| Submission date |
+| `created_at` | timestamp | Submission date |
+| `updated_at` | timestamp | Last modified |
+
+### 3.5 Messages Table (Phase 4)
+Per-application message thread between a team and an applicant.
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | uuid | Primary Key |
+| `application_id` | uuid | Foreign Key -> Applications |
+| `sender_id` | uuid | Foreign Key -> auth.users |
+| `sender_type` | enum | `team` or `applicant` |
+| `body` | text | Message content |
+| `created_at` | timestamp | When the message was sent |
 
 ---
 
@@ -61,26 +89,104 @@ The join table linking students to teams.
 
 ### 4.1 The Dynamic Form Engine
 Instead of static forms, the application page must:
-1. Fetch the `questions` JSONB from the **Teams** table.
-2. Map over the array to render `input` or `textarea` components.
+1. Fetch the `custom_questions` JSONB from the **Teams** table.
+2. Map over the array to render `input`, `textarea`, or `select` components.
 3. Validate responses against the `required` flag using Zod.
 4. Save the results into the `answers` JSONB column in the **Applications** table.
 
 ### 4.2 Status Progression
-Team leads need an interface to toggle the `status` field. Updating this field should trigger a UI update on the student's "My Applications" dashboard.
+Team owners update the `status` field from the admin review page. Changing status triggers an email notification to the applicant.
+
+### 4.3 Messaging
+Teams and applicants communicate through per-application message threads. Sending a message triggers email notifications:
+- **Team → Applicant:** Email sent to the applicant's @cornell.edu address.
+- **Applicant → Team:** Email sent to the team's email + all reviewer emails for that team.
 
 ---
 
 ## 5. Security (Row Level Security)
-- **Profiles:** Users can only read/write their own profile.
-- **Applications:** - Students: Can read/write their own applications.
-    - Team Leads: Can read applications where `team_id` matches their managed team.
-- **Teams:** Publicly readable; writable only by users with a `team_admin` role (to be implemented via a `team_members` join table).
+- **Profiles:** Users can read/write their own profile. Team owners and reviewers can read profiles of students who applied to their team.
+- **Applications:** Students can read/write their own. Team owners and reviewers can read their team's applications. Only team owners can update application status.
+- **Teams:** Publicly readable. Only the team owner can update their team.
+- **Messages:** Readable by the applicant and by the team owner/reviewers. Writable by the applicant (for their own application) and by the team owner.
 
 ---
 
-## 6. Implementation Phases (48h Sprint)
-1. **Phase 1 (Hours 1-8):** Database initialization, Auth setup, and Profile creation flow.
-2. **Phase 2 (Hours 9-18):** Team discovery page and Dynamic Application Form.
-3. **Phase 3 (Hours 19-30):** Team Lead Dashboard (Table view with status toggles).
-4. **Phase 4 (Hours 31-48):** Polish, Resume upload functionality, and Cornell branding.
+## 6. Implementation Phases
+
+### Phase 1: Foundation (COMPLETE)
+- Database initialization (enums, profiles, teams, team_members, applications)
+- Supabase Auth (signup, login, signout, email verification)
+- Profile creation flow (React Hook Form + Zod)
+- Basic dashboard layout with header and user nav
+- Middleware route protection
+- Seed data (3 teams, test users, sample applications)
+
+### Phase 2: Core Product (COMPLETE)
+- Team browsing page (`/teams`) with category filter
+- Team detail page (`/teams/[id]`) with dynamic application form
+- Application submission flow (draft → submit)
+- My Applications page (`/applications`) with status badges
+- Admin dashboard (`/admin/[teamId]`) with tabbed status filtering
+- Application review page with status changer (owner-only)
+- Header nav: student links vs team owner vs reviewer
+- Team owner accounts redirect to admin on login
+
+### Phase 3: Team Lead Dashboard (COMPLETE)
+- Merged into Phase 2. Table view of applications, status toggles, reviewer read-only access.
+
+### Phase 4: Polish, Messaging, and Branding
+
+#### 4a. Mobile Navigation (COMPLETE)
+- [x] Hamburger menu for mobile screens (Sheet component, slides from left)
+- [x] Mobile-friendly admin dashboard (Select dropdown for status filter, responsive table columns)
+
+#### 4b. Profile Editing (COMPLETE)
+- [x] Add "Edit Profile" page accessible from dashboard/user nav
+- [x] Re-use ProfileForm component with pre-filled values and `updateProfile` action
+
+#### 4c. Application Flow Polish (COMPLETE)
+- [x] Auto-redirect after creating a new draft (no "reload to continue" message)
+- [x] Loading states/spinners on form submissions
+- [x] Confirmation dialog before submitting application (can't undo)
+- [x] Better empty states and error pages (404, unauthorized)
+- [x] Cursor pointer on all interactive elements (tabs, buttons, dropdown items, avatar trigger, etc.)
+
+#### 4d. Resume Upload
+- [ ] Create Supabase Storage bucket (`resumes`) with RLS
+- [ ] File upload component on profile form (PDF only, size limit)
+- [ ] Store file path in `profiles.resume_url`
+- [ ] Viewable/downloadable by team owners and reviewers on the review page
+
+#### 4e. Messaging System
+- [x] Create `messages` table with migration + RLS policies
+- [x] Message thread UI on the application review page (visible to team owner + reviewers)
+- [x] Message thread UI on the student's application detail view
+- [x] Server actions: `sendMessage(applicationId, body)`
+- [x] Real-time updates via Supabase Realtime subscriptions (or polling)
+- [x] Unread message indicators
+
+#### 4f. Email Notifications
+- [ ] Set up email provider (Resend, Supabase Edge Functions, or Next.js API route + nodemailer)
+- [ ] **Status change notification:** When a team updates an applicant's status, email the applicant (e.g., "Your application to DTI has been moved to Interviewing")
+- [ ] **Team → Applicant message notification:** When a team messages an applicant, email the applicant
+- [ ] **Applicant → Team message notification:** When an applicant messages a team, email the team account + all reviewer emails for that team
+- [ ] Email templates with Cornell branding
+- [ ] Unsubscribe/notification preferences (future)
+
+#### 4g. Cornell Branding
+- [ ] Cornell red color scheme (`#B31B1B`) integrated into Tailwind theme
+- [ ] Updated landing page (`/`) with value proposition, team showcase, and call to action
+- [ ] Cornell Common logo/wordmark in header
+- [ ] Consistent typography and spacing
+
+#### 4h. Reviewer Management
+- [ ] Team owner can add reviewers from admin page (by NetID or email)
+- [ ] Team owner can remove reviewers
+- [ ] Server actions: `addReviewer(teamId, email)`, `removeReviewer(teamId, userId)`
+
+#### 4i. Deadlines (Stretch)
+- [ ] `deadline` column on teams table (nullable timestamp)
+- [ ] Display deadline on team detail page
+- [ ] Auto-disable application form after deadline passes
+- [ ] "Applications close in X days" badge on team cards

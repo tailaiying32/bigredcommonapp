@@ -1,23 +1,13 @@
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { StatusBadge } from "@/components/applications/status-badge";
+import { ApplicationsTable } from "@/components/admin/applications-table";
+import { getMessageCounts } from "@/lib/actions/messages";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { ApplicationStatus } from "@/types/database";
 
 export async function generateMetadata({
   params,
@@ -104,82 +94,16 @@ export default async function AdminDashboardPage({
     (profiles ?? []).map((p) => [p.id, p])
   );
 
+  const messageCounts = await getMessageCounts(appRows.map((a) => a.id));
+
   const apps = appRows.map((a) => ({
-    ...a,
+    id: a.id,
+    team_id: a.team_id,
+    status: a.status,
+    updated_at: a.updated_at,
     profile: profileMap.get(a.student_id) ?? null,
+    message_count: messageCounts[a.id] ?? 0,
   }));
-
-  const statusFilters: { value: string; label: string }[] = [
-    { value: "all", label: `All (${apps.length})` },
-    {
-      value: "submitted",
-      label: `Submitted (${apps.filter((a) => a.status === "submitted").length})`,
-    },
-    {
-      value: "interviewing",
-      label: `Interviewing (${apps.filter((a) => a.status === "interviewing").length})`,
-    },
-    {
-      value: "accepted",
-      label: `Accepted (${apps.filter((a) => a.status === "accepted").length})`,
-    },
-    {
-      value: "rejected",
-      label: `Rejected (${apps.filter((a) => a.status === "rejected").length})`,
-    },
-  ];
-
-  function renderTable(
-    filteredApps: typeof apps
-  ) {
-    if (filteredApps.length === 0) {
-      return (
-        <p className="py-4 text-center text-muted-foreground">
-          No applications found.
-        </p>
-      );
-    }
-
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Applicant</TableHead>
-            <TableHead>NetID</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Submitted</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredApps.map((app) => {
-            return (
-              <TableRow key={app.id}>
-                <TableCell className="font-medium">
-                  {app.profile?.full_name ?? "Unknown"}
-                </TableCell>
-                <TableCell>{app.profile?.netid ?? "—"}</TableCell>
-                <TableCell>
-                  <StatusBadge status={app.status as ApplicationStatus} />
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {new Date(app.updated_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <Link
-                    href={`/admin/${teamId}/applications/${app.id}`}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Review
-                  </Link>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -195,30 +119,7 @@ export default async function AdminDashboardPage({
           <CardTitle>Applications</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all">
-            <TabsList>
-              {statusFilters.map((f) => (
-                <TabsTrigger key={f.value} value={f.value}>
-                  {f.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <TabsContent value="all" className="mt-4">
-              {renderTable(apps)}
-            </TabsContent>
-            <TabsContent value="submitted" className="mt-4">
-              {renderTable(apps.filter((a) => a.status === "submitted"))}
-            </TabsContent>
-            <TabsContent value="interviewing" className="mt-4">
-              {renderTable(apps.filter((a) => a.status === "interviewing"))}
-            </TabsContent>
-            <TabsContent value="accepted" className="mt-4">
-              {renderTable(apps.filter((a) => a.status === "accepted"))}
-            </TabsContent>
-            <TabsContent value="rejected" className="mt-4">
-              {renderTable(apps.filter((a) => a.status === "rejected"))}
-            </TabsContent>
-          </Tabs>
+          <ApplicationsTable apps={apps} teamId={teamId} />
         </CardContent>
       </Card>
     </div>

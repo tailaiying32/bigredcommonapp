@@ -2,6 +2,8 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/applications/status-badge";
 import { StatusChanger } from "@/components/admin/status-changer";
+import { MessageThread } from "@/components/messages/message-thread";
+import { getMessages } from "@/lib/actions/messages";
 import {
   Card,
   CardContent,
@@ -10,7 +12,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { TeamQuestion, ApplicationStatus } from "@/types/database";
+import type { TeamQuestion, ApplicationStatus, Message } from "@/types/database";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -91,6 +93,9 @@ export default async function ReviewApplicationPage({
   const questions = team.custom_questions as unknown as TeamQuestion[];
   const answers = app.answers as Record<string, string>;
 
+  // Fetch messages
+  const { messages } = await getMessages(app.id);
+
   return (
     <div className="space-y-6">
       <Link
@@ -138,16 +143,25 @@ export default async function ReviewApplicationPage({
               <dt className="font-medium text-muted-foreground">Resume</dt>
               <dd>
                 {profile?.resume_url ? (
-                  <a
-                    href={profile.resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    View resume
-                  </a>
+                  <span className="inline-flex items-center gap-3">
+                    <a
+                      href={profile.resume_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      View Resume
+                    </a>
+                    <a
+                      href={profile.resume_url}
+                      download="resume.pdf"
+                      className="text-primary hover:underline"
+                    >
+                      Download
+                    </a>
+                  </span>
                 ) : (
-                  "—"
+                  <span className="text-muted-foreground">No resume uploaded</span>
                 )}
               </dd>
             </div>
@@ -169,6 +183,21 @@ export default async function ReviewApplicationPage({
               <p className="mt-1">{answers[q.id] || "—"}</p>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      {/* Messages */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Messages</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MessageThread
+            applicationId={app.id}
+            currentUserId={user.id}
+            canSend={isOwner}
+            initialMessages={messages}
+          />
         </CardContent>
       </Card>
 

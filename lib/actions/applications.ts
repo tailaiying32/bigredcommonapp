@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { buildApplicationSchema } from "@/lib/validations/application";
+import { sendEmail } from "@/lib/email/ses";
+import { statusChangeEmail } from "@/lib/email/templates";
 import type { TeamQuestion } from "@/types/database";
 
 export async function createApplication(
@@ -18,12 +20,16 @@ export async function createApplication(
     return { error: "Not authenticated" };
   }
 
-  const { error } = await supabase.from("applications").insert({
-    student_id: user.id,
-    team_id: teamId,
-    status: "draft",
-    answers,
-  });
+  const { data, error } = await supabase
+    .from("applications")
+    .insert({
+      student_id: user.id,
+      team_id: teamId,
+      status: "draft",
+      answers,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { error: error.message };
@@ -31,7 +37,7 @@ export async function createApplication(
 
   revalidatePath(`/teams/${teamId}`);
   revalidatePath("/applications");
-  return { success: true };
+  return { success: true, applicationId: data.id };
 }
 
 export async function updateApplication(
@@ -138,7 +144,7 @@ export async function updateApplicationStatus(
   // Verify user is the team owner
   const { data: team } = await supabase
     .from("teams")
-    .select("owner_id")
+    .select("owner_id, name")
     .eq("id", app.team_id)
     .single();
 
@@ -156,5 +162,22 @@ export async function updateApplicationStatus(
   }
 
   revalidatePath(`/admin/${app.team_id}`);
+
+  // Fire-and-forget email notification
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email, full_name")
+    .eq("id", app.student_id)
+    .single();
+
+  if (profile?.email) {
+    const { subject, html } = statusChangeEmail({
+      applicantName: profile.full_name ?? "Applicant",
+      teamName: team.name,
+      newStatus,
+    });
+    void sendEmail(profile.email, subject, html);
+  }
+
   return { success: true };
 }

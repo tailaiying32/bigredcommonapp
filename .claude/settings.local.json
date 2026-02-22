@@ -4,7 +4,10 @@
       "Bash(node:*)",
       "Bash(cd /c/Users/Tailai/Stuff/bigredcommonapp && npm run build 2>&1)",
       "Bash(head:*)",
-      "Bash(cd /c/Users/Tailai/Stuff/bigredcommonapp && npx tsc --noEmit 2>&1)"
+      "Bash(cd /c/Users/Tailai/Stuff/bigredcommonapp && npx tsc --noEmit 2>&1)",
+      "Bash(ls C:\\\\Users\\\\Tailai\\\\Stuff\\\\bigredcommonapp\\\\app\\\\\\(dashboard\\):*)",
+      "Bash(/c/Users/Tailai/miniforge3/python:*)",
+      "Bash(cd:*)"
     ]
   }
 }

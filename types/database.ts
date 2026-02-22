@@ -7,6 +7,8 @@ export type ApplicationStatus =
 
 export type TeamRole = "admin" | "reviewer";
 
+export type SenderType = "team" | "applicant";
+
 export type TeamQuestion = {
   id: string;
   label: string;
@@ -155,6 +157,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      messages: {
+        Row: {
+          id: string;
+          application_id: string;
+          sender_id: string;
+          sender_type: Database["public"]["Enums"]["sender_type"];
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          application_id: string;
+          sender_id: string;
+          sender_type: Database["public"]["Enums"]["sender_type"];
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          application_id?: string;
+          sender_id?: string;
+          sender_type?: Database["public"]["Enums"]["sender_type"];
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -165,6 +194,7 @@ export type Database = {
     Enums: {
       application_status: ApplicationStatus;
       team_role: TeamRole;
+      sender_type: SenderType;
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -177,3 +207,4 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Team = Database["public"]["Tables"]["teams"]["Row"];
 export type TeamMember = Database["public"]["Tables"]["team_members"]["Row"];
 export type Application = Database["public"]["Tables"]["applications"]["Row"];
+export type Message = Database["public"]["Tables"]["messages"]["Row"];

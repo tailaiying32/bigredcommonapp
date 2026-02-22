@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { UserNav } from "./user-nav";
+import { MobileNav } from "./mobile-nav";
 
 export async function Header() {
   const supabase = await createClient();
@@ -48,50 +49,43 @@ export async function Header() {
 
   const isTeamOwner = !!ownedTeam;
 
-  // Display name for the nav
+  // Build nav links based on account type
+  const navLinks: { href: string; label: string }[] = [];
+  if (!isTeamOwner) {
+    navLinks.push({ href: "/teams", label: "Teams" });
+    if (profile) {
+      navLinks.push({ href: "/applications", label: "My Applications" });
+      navLinks.push({ href: "/profile/edit", label: "Edit Profile" });
+    }
+    for (const t of reviewerTeams) {
+      navLinks.push({ href: `/admin/${t.id}`, label: `${t.name} (Reviewer)` });
+    }
+  }
+
   const navName = isTeamOwner
     ? ownedTeam!.name
     : profile?.full_name ?? "User";
   const navEmail = user?.email ?? "";
+  const homeHref = isTeamOwner ? `/admin/${ownedTeam!.id}` : "/dashboard";
 
   return (
     <header className="border-b">
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-        <div className="flex items-center gap-6">
-          <Link
-            href={isTeamOwner ? `/admin/${ownedTeam!.id}` : "/dashboard"}
-            className="text-xl font-bold"
-          >
+        <div className="flex items-center gap-3">
+          {navLinks.length > 0 && <MobileNav links={navLinks} />}
+          <Link href={homeHref} className="text-xl font-bold">
             Cornell Common
           </Link>
           <nav className="hidden items-center gap-4 text-sm md:flex">
-            {!isTeamOwner && (
-              <>
-                <Link
-                  href="/teams"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Teams
-                </Link>
-                {profile && (
-                  <Link
-                    href="/applications"
-                    className="text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    My Applications
-                  </Link>
-                )}
-                {reviewerTeams.map((t) => (
-                  <Link
-                    key={t.id}
-                    href={`/admin/${t.id}`}
-                    className="text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {t.name} (Reviewer)
-                  </Link>
-                ))}
-              </>
-            )}
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </div>
         {user && (
@@ -99,6 +93,7 @@ export async function Header() {
             name={navName}
             email={navEmail}
             netid={profile?.netid}
+            hasProfile={!!profile}
           />
         )}
       </div>

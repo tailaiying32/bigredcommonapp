@@ -26,7 +26,7 @@ export const profileSchema = z.object({
     .min(0, "GPA must be at least 0")
     .max(4.3, "GPA must be at most 4.3")
     .optional(),
-  resume_url: z.string().url("Invalid URL").optional().or(z.literal("")),
+  resume_url: z.string().optional().or(z.literal("")),
 });
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;

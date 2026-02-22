@@ -3,10 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/profile/profile-form";
 
 export const metadata = {
-  title: "Create Profile | Cornell Common",
+  title: "Edit Profile | Cornell Common",
 };
 
-export default async function CreateProfilePage() {
+export default async function EditProfilePage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,20 +16,19 @@ export default async function CreateProfilePage() {
     redirect("/login");
   }
 
-  // If profile already exists, go to dashboard
   const { data: profile } = await supabase
     .from("profiles")
     .select()
     .eq("id", user.id)
     .single();
 
-  if (profile) {
-    redirect("/dashboard");
+  if (!profile) {
+    redirect("/profile/create");
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <ProfileForm email={user.email!} userId={user.id} />
+    <div className="flex items-center justify-center px-4 py-8">
+      <ProfileForm email={user.email!} userId={user.id} profile={profile} />
     </div>
   );
 }
