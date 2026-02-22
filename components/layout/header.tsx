@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { UserNav } from "./user-nav";
@@ -55,7 +56,6 @@ export async function Header() {
     navLinks.push({ href: "/teams", label: "Teams" });
     if (profile) {
       navLinks.push({ href: "/applications", label: "My Applications" });
-      navLinks.push({ href: "/profile/edit", label: "Edit Profile" });
     }
     for (const t of reviewerTeams) {
       navLinks.push({ href: `/admin/${t.id}`, label: `${t.name} (Reviewer)` });
@@ -66,17 +66,36 @@ export async function Header() {
     ? ownedTeam!.name
     : profile?.full_name ?? "User";
   const navEmail = user?.email ?? "";
-  const homeHref = isTeamOwner ? `/admin/${ownedTeam!.id}` : "/dashboard";
+  const homeHref = isTeamOwner
+    ? `/admin/${ownedTeam!.id}`
+    : user
+      ? "/dashboard"
+      : "/";
 
   return (
     <header className="border-b">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-        <div className="flex items-center gap-3">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <div className="flex items-center gap-6">
           {navLinks.length > 0 && <MobileNav links={navLinks} />}
-          <Link href={homeHref} className="text-xl font-bold">
-            Cornell Common
+          <Link href={homeHref} className="flex shrink-0 items-center">
+            <Image
+              src="/CDE_Logo_Stacked.png"
+              alt="Cornell Duffield Engineering"
+              width={120}
+              height={40}
+              className="h-10 w-auto dark:hidden"
+              priority
+            />
+            <Image
+              src="/CornellDuffieldEngineering_Stacked_Logo_No_Seal_White.png"
+              alt="Cornell Duffield Engineering"
+              width={120}
+              height={40}
+              className="hidden h-10 w-auto dark:block"
+              priority
+            />
           </Link>
-          <nav className="hidden items-center gap-4 text-sm md:flex">
+          <nav className="hidden items-center gap-8 text-sm md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}

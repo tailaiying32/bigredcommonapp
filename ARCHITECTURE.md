@@ -166,19 +166,21 @@ Teams and applicants communicate through per-application message threads. Sendin
 - [x] Real-time updates via Supabase Realtime subscriptions (or polling)
 - [x] Unread message indicators
 
-#### 4f. Email Notifications
-- [ ] Set up email provider (Resend, Supabase Edge Functions, or Next.js API route + nodemailer)
-- [ ] **Status change notification:** When a team updates an applicant's status, email the applicant (e.g., "Your application to DTI has been moved to Interviewing")
-- [ ] **Team → Applicant message notification:** When a team messages an applicant, email the applicant
-- [ ] **Applicant → Team message notification:** When an applicant messages a team, email the team account + all reviewer emails for that team
-- [ ] Email templates with Cornell branding
+#### 4f. Email Notifications (COMPLETE)
+- [x] Set up email provider (AWS SES via `@aws-sdk/client-ses`)
+- [x] **Status change notification:** When a team updates an applicant's status, email the applicant
+- [x] **Team → Applicant message notification:** When a team messages an applicant, email the applicant
+- [x] **Applicant → Team message notification:** When an applicant messages a team, email the team account + all reviewer emails for that team
+- [x] Email templates with Cornell branding (inline-styled HTML with #B31B1B header)
 - [ ] Unsubscribe/notification preferences (future)
 
-#### 4g. Cornell Branding
-- [ ] Cornell red color scheme (`#B31B1B`) integrated into Tailwind theme
-- [ ] Updated landing page (`/`) with value proposition, team showcase, and call to action
-- [ ] Cornell Common logo/wordmark in header
-- [ ] Consistent typography and spacing
+> **Note:** SES is currently in sandbox mode (can only send to verified email addresses). To go to production: (1) buy/verify a domain in SES, (2) request production access from AWS, (3) update `SES_FROM_EMAIL` to `noreply@yourdomain.com`.
+
+#### 4g. Cornell Branding (COMPLETE)
+- [x] Cornell red color scheme (`#B31B1B`) integrated into Tailwind theme (primary, ring, accent)
+- [x] Updated landing page (`/`) with hero, features section, team showcase, and CTA
+- [x] Cornell Duffield Engineering logo in header (light/dark variants)
+- [x] Consistent typography and spacing
 
 #### 4h. Reviewer Management
 - [ ] Team owner can add reviewers from admin page (by NetID or email)

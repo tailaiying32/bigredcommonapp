@@ -76,6 +76,7 @@ export type Database = {
           website: string | null;
           custom_questions: Json;
           owner_id: string | null;
+          logo_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -87,6 +88,7 @@ export type Database = {
           website?: string | null;
           custom_questions?: Json;
           owner_id?: string | null;
+          logo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -98,6 +100,7 @@ export type Database = {
           website?: string | null;
           custom_questions?: Json;
           owner_id?: string | null;
+          logo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };

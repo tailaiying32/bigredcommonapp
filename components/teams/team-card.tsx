@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   Card,
@@ -6,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import type { Team } from "@/types/database";
 
 export function TeamCard({ team }: { team: Team }) {
@@ -14,15 +14,27 @@ export function TeamCard({ team }: { team: Team }) {
     <Link href={`/teams/${team.id}`}>
       <Card className="h-full transition-shadow hover:shadow-md">
         <CardHeader>
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg">{team.name}</CardTitle>
-            {team.category && (
-              <Badge variant="secondary">{team.category}</Badge>
+          <div className="flex items-start gap-3">
+            {team.logo_url ? (
+              <Image
+                src={team.logo_url}
+                alt={`${team.name} logo`}
+                width={48}
+                height={48}
+                className="size-12 shrink-0 rounded-md object-contain"
+              />
+            ) : (
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-lg font-bold text-primary">
+                {team.name.charAt(0)}
+              </div>
             )}
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-lg">{team.name}</CardTitle>
+              <CardDescription className="line-clamp-2">
+                {team.description}
+              </CardDescription>
+            </div>
           </div>
-          <CardDescription className="line-clamp-2">
-            {team.description}
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ApplicationForm } from "@/components/applications/application-form";
 import { StatusBadge } from "@/components/applications/status-badge";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -78,9 +78,21 @@ export default async function TeamDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          {team.logo_url ? (
+            <Image
+              src={team.logo_url}
+              alt={`${team.name} logo`}
+              width={64}
+              height={64}
+              className="size-16 shrink-0 rounded-lg object-contain"
+            />
+          ) : (
+            <div className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-2xl font-bold text-primary">
+              {team.name.charAt(0)}
+            </div>
+          )}
           <h1 className="text-3xl font-bold">{team.name}</h1>
-          {team.category && <Badge variant="secondary">{team.category}</Badge>}
         </div>
         {team.description && (
           <p className="mt-2 text-muted-foreground">{team.description}</p>

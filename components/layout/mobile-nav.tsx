@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,22 @@ export function MobileNav({ links }: { links: NavLink[] }) {
       </SheetTrigger>
       <SheetContent side="left" className="w-64">
         <SheetHeader>
-          <SheetTitle>Cornell Common</SheetTitle>
+          <SheetTitle>
+            <Image
+              src="/CDE_Logo_Stacked.png"
+              alt="Cornell Duffield Engineering"
+              width={100}
+              height={34}
+              className="h-8 w-auto dark:hidden"
+            />
+            <Image
+              src="/CornellDuffieldEngineering_Stacked_Logo_No_Seal_White.png"
+              alt="Cornell Duffield Engineering"
+              width={100}
+              height={34}
+              className="hidden h-8 w-auto dark:block"
+            />
+          </SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-2 px-4">
           {links.map((link) => (
