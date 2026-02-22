@@ -29,7 +29,7 @@ export default async function CreateProfilePage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <ProfileForm email={user.email!} userId={user.id} />
+      <ProfileForm email={user.email!} />
     </div>
   );
 }

@@ -28,7 +28,7 @@ export default async function EditProfilePage() {
 
   return (
     <div className="flex items-center justify-center px-4 py-8">
-      <ProfileForm email={user.email!} userId={user.id} profile={profile} />
+      <ProfileForm email={user.email!} profile={profile} />
     </div>
   );
 }

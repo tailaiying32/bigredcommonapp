@@ -23,15 +23,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ResumeUpload } from "@/components/profile/resume-upload";
 
 interface ProfileFormProps {
   email: string;
-  userId: string;
   profile?: Profile;
 }
 
-export function ProfileForm({ email, userId, profile }: ProfileFormProps) {
+export function ProfileForm({ email, profile }: ProfileFormProps) {
   const isEditing = !!profile;
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -188,13 +186,15 @@ export function ProfileForm({ email, userId, profile }: ProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Resume (optional)</Label>
-            <ResumeUpload
-              userId={userId}
-              currentUrl={watch("resume_url") || null}
-              onUpload={(url) => setValue("resume_url", url)}
-              onRemove={() => setValue("resume_url", "")}
+            <Label htmlFor="resume_url">Resume URL (optional)</Label>
+            <Input
+              id="resume_url"
+              {...register("resume_url")}
+              placeholder="https://drive.google.com/..."
             />
+            <p className="text-xs text-muted-foreground">
+              Paste a link to your resume (Google Drive, Dropbox, etc.)
+            </p>
           </div>
 
           {serverError && (
