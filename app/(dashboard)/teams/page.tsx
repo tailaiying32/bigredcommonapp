@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { TeamCard } from "@/components/teams/team-card";
-import type { Team } from "@/types/database";
+import type { Team, ClassStanding } from "@/types/database";
 
 export const metadata = {
   title: "Browse Teams | Cornell Common",
@@ -16,6 +16,20 @@ export default async function TeamsPage() {
 
   const allTeams = (teams ?? []) as Team[];
 
+  // Fetch viewer's class standing
+  let classStanding: ClassStanding | null = null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("class_standing")
+      .eq("id", user.id)
+      .single();
+    classStanding = profile?.class_standing ?? null;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -30,7 +44,7 @@ export default async function TeamsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {allTeams.map((team) => (
-            <TeamCard key={team.id} team={team} />
+            <TeamCard key={team.id} team={team} classStanding={classStanding} />
           ))}
         </div>
       )}

@@ -1,10 +1,14 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ApplicationsTable } from "@/components/admin/applications-table";
+import { ReviewerManager } from "@/components/admin/reviewer-manager";
+import { DeadlineManager } from "@/components/admin/deadline-manager";
 import { getMessageCounts } from "@/lib/actions/messages";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -48,7 +52,7 @@ export default async function AdminDashboardPage({
   // Fetch team and check access (owner or reviewer)
   const { data: team } = await supabase
     .from("teams")
-    .select("name, owner_id")
+    .select("name, owner_id, upperclassman_deadline, lowerclassman_deadline")
     .eq("id", teamId)
     .single();
 
@@ -105,6 +109,28 @@ export default async function AdminDashboardPage({
     message_count: messageCounts[a.id] ?? 0,
   }));
 
+  // Fetch reviewer profiles (owner only)
+  let reviewers: { id: string; netid: string | null; full_name: string | null }[] = [];
+  if (isOwner) {
+    const { data: members } = await supabaseAdmin
+      .from("team_members")
+      .select("user_id")
+      .eq("team_id", teamId);
+
+    const reviewerIds = (members ?? []).map((m) => m.user_id);
+    if (reviewerIds.length > 0) {
+      const { data: reviewerProfiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, netid, full_name")
+        .in("id", reviewerIds);
+      reviewers = (reviewerProfiles ?? []).map((p) => ({
+        id: p.id,
+        netid: p.netid,
+        full_name: p.full_name,
+      }));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -122,6 +148,38 @@ export default async function AdminDashboardPage({
           <ApplicationsTable apps={apps} teamId={teamId} />
         </CardContent>
       </Card>
+
+      {isOwner && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Deadlines</CardTitle>
+            <CardDescription>
+              Set application deadlines for upperclassmen and lowerclassmen independently.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DeadlineManager
+              teamId={teamId}
+              initialUpperclassman={team.upperclassman_deadline}
+              initialLowerclassman={team.lowerclassman_deadline}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {isOwner && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Reviewers</CardTitle>
+            <CardDescription>
+              Add team members who can view applications and messages.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ReviewerManager teamId={teamId} initialReviewers={reviewers} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

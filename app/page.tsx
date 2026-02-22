@@ -20,22 +20,33 @@ export default async function Home() {
       {/* Hero */}
       <section className="flex flex-1 flex-col items-center justify-center px-4 py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <Image
-            src="/CDE_Logo_Stacked.png"
-            alt="Cornell Duffield Engineering"
-            width={280}
-            height={96}
-            className="mx-auto mb-8 h-16 w-auto dark:hidden sm:h-20"
-            priority
-          />
-          <Image
-            src="/CornellDuffieldEngineering_Stacked_Logo_No_Seal_White.png"
-            alt="Cornell Duffield Engineering"
-            width={280}
-            height={96}
-            className="mx-auto mb-8 hidden h-16 w-auto dark:block sm:h-20"
-            priority
-          />
+          <div className="mx-auto mb-8 flex items-center justify-center gap-4">
+            <Image
+              src="/Cornell_University_Logo.png"
+              alt="Cornell University"
+              width={96}
+              height={96}
+              className="h-18 w-auto sm:h-22"
+              priority
+            />
+            <div className="h-18 w-px bg-border sm:h-22" />
+            <Image
+              src="/CDE_Logo_Stacked.png"
+              alt="Cornell Duffield Engineering"
+              width={280}
+              height={96}
+              className="ml-1 h-16 w-auto dark:hidden sm:h-20"
+              priority
+            />
+            <Image
+              src="/CornellDuffieldEngineering_Stacked_Logo_No_Seal_White.png"
+              alt="Cornell Duffield Engineering"
+              width={280}
+              height={96}
+              className="ml-1 hidden h-16 w-auto dark:block sm:h-20"
+              priority
+            />
+          </div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             Project Team Common App
           </h1>

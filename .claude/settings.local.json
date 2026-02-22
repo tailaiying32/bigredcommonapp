@@ -10,7 +10,8 @@
       "Bash(cd:*)",
       "Bash(ls:*)",
       "WebSearch",
-      "WebFetch(domain:cornellxr.com)"
+      "WebFetch(domain:cornellxr.com)",
+      "Bash(find:*)"
     ]
   }
 }

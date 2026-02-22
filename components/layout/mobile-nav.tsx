@@ -31,20 +31,28 @@ export function MobileNav({ links }: { links: NavLink[] }) {
       </SheetTrigger>
       <SheetContent side="left" className="w-64">
         <SheetHeader>
-          <SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <Image
+              src="/Cornell_University_Logo.png"
+              alt="Cornell University"
+              width={40}
+              height={40}
+              className="h-9 w-auto"
+            />
+            <div className="h-9 w-px bg-border" />
             <Image
               src="/CDE_Logo_Stacked.png"
               alt="Cornell Duffield Engineering"
               width={100}
               height={34}
-              className="h-8 w-auto dark:hidden"
+              className="ml-1 h-8 w-auto dark:hidden"
             />
             <Image
               src="/CornellDuffieldEngineering_Stacked_Logo_No_Seal_White.png"
               alt="Cornell Duffield Engineering"
               width={100}
               height={34}
-              className="hidden h-8 w-auto dark:block"
+              className="ml-1 hidden h-8 w-auto dark:block"
             />
           </SheetTitle>
         </SheetHeader>

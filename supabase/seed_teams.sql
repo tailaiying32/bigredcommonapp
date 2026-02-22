@@ -4,6 +4,48 @@
 --
 -- Uses ON CONFLICT (name) DO UPDATE so it safely upserts existing teams
 -- (e.g. DTI, Rocketry, AppDev from seed.sql) with logo_url and description.
+--
+-- PREREQUISITE: Create these team accounts via Supabase Dashboard >
+-- Authentication > Users > Add User (with "Auto Confirm User" checked).
+-- Password for all: 511425@gniY
+--
+--   aguaclara@cornell.edu
+--   appdev@cornell.edu
+--   baja@cornell.edu
+--   c2s2@cornell.edu
+--   concretecanoe@cornell.edu
+--   cds@cornell.edu
+--   cev@cornell.edu
+--   chemecar@cornell.edu
+--   marsrover@cornell.edu
+--   combatrobotics@cornell.edu
+--   assistivetech@cornell.edu
+--   hyperloop@cornell.edu
+--   rocketry@cornell.edu
+--   cuprobotics@cornell.edu
+--   cuad@cornell.edu
+--   cuair@cornell.edu
+--   autoboat@cornell.edu
+--   cuauv@cornell.edu
+--   cubmd@cornell.edu
+--   geodata@cornell.edu
+--   cusail@cornell.edu
+--   cuxrl@cornell.edu
+--   debut@cornell.edu
+--   dbf@cornell.edu
+--   dti@cornell.edu
+--   eia@cornell.edu
+--   ewb@cornell.edu
+--   esw@cornell.edu
+--   ewh@cornell.edu
+--   fsae@cornell.edu
+--   hack4impact@cornell.edu
+--   igem@cornell.edu
+--   nexus@cornell.edu
+--   seismicdesign@cornell.edu
+--   senstech@cornell.edu
+--   solarboat@cornell.edu
+--   steelbridge@cornell.edu
 -- =============================================================================
 
 -- We need a unique constraint on name for ON CONFLICT to work.

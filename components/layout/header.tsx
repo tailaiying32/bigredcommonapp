@@ -77,13 +77,22 @@ export async function Header() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <div className="flex items-center gap-6">
           {navLinks.length > 0 && <MobileNav links={navLinks} />}
-          <Link href={homeHref} className="flex shrink-0 items-center">
+          <Link href={homeHref} className="flex shrink-0 items-center gap-3">
+            <Image
+              src="/Cornell_University_Logo.png"
+              alt="Cornell University"
+              width={48}
+              height={48}
+              className="h-10 w-auto"
+              priority
+            />
+            <div className="h-10 w-px bg-border" />
             <Image
               src="/CDE_Logo_Stacked.png"
               alt="Cornell Duffield Engineering"
               width={120}
               height={40}
-              className="h-10 w-auto dark:hidden"
+              className="ml-1 h-10 w-auto dark:hidden"
               priority
             />
             <Image
@@ -91,7 +100,7 @@ export async function Header() {
               alt="Cornell Duffield Engineering"
               width={120}
               height={40}
-              className="hidden h-10 w-auto dark:block"
+              className="ml-1 hidden h-10 w-auto dark:block"
               priority
             />
           </Link>

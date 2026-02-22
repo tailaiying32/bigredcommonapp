@@ -183,12 +183,12 @@ Teams and applicants communicate through per-application message threads. Sendin
 - [x] Consistent typography and spacing
 
 #### 4h. Reviewer Management
-- [ ] Team owner can add reviewers from admin page (by NetID or email)
-- [ ] Team owner can remove reviewers
-- [ ] Server actions: `addReviewer(teamId, email)`, `removeReviewer(teamId, userId)`
+- [x] Team owner can add reviewers from admin page (by NetID or email)
+- [x] Team owner can remove reviewers
+- [x] Server actions: `addReviewer(teamId, email)`, `removeReviewer(teamId, userId)`
 
 #### 4i. Deadlines (Stretch)
-- [ ] `deadline` column on teams table (nullable timestamp)
-- [ ] Display deadline on team detail page
-- [ ] Auto-disable application form after deadline passes
-- [ ] "Applications close in X days" badge on team cards
+- [x] `deadline` column on teams table (nullable timestamp)
+- [x] Display deadline on team detail page
+- [x] Auto-disable application form after deadline passes
+- [x] "Applications close in X days" badge on team cards

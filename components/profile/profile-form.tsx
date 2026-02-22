@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -40,6 +47,7 @@ export function ProfileForm({ email, userId, profile }: ProfileFormProps) {
       email,
       netid: profile?.netid ?? email.split("@")[0],
       full_name: profile?.full_name ?? "",
+      class_standing: profile?.class_standing ?? undefined,
       major: profile?.major ?? "",
       grad_year: profile?.grad_year ?? undefined,
       gpa: profile?.gpa ?? undefined,
@@ -108,6 +116,33 @@ export function ProfileForm({ email, userId, profile }: ProfileFormProps) {
             {errors.full_name && (
               <p className="text-sm text-destructive">
                 {errors.full_name.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Class Standing</Label>
+            <Select
+              value={watch("class_standing") ?? ""}
+              onValueChange={(val) =>
+                setValue("class_standing", val as "lowerclassman" | "upperclassman", { shouldValidate: true })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select class standing" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lowerclassman">
+                  Lowerclassman (Freshman / First-year transfer)
+                </SelectItem>
+                <SelectItem value="upperclassman">
+                  Upperclassman (Sophomore+)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.class_standing && (
+              <p className="text-sm text-destructive">
+                {errors.class_standing.message}
               </p>
             )}
           </div>

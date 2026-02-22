@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/card";
 import { MessageThread } from "@/components/messages/message-thread";
 import { getMessages } from "@/lib/actions/messages";
-import type { TeamQuestion, Application, Message } from "@/types/database";
-import { ExternalLink } from "lucide-react";
+import type { TeamQuestion, Application, Message, ClassStanding } from "@/types/database";
+import { ExternalLink, Clock } from "lucide-react";
 
 export async function generateMetadata({
   params,
@@ -75,6 +75,32 @@ export default async function TeamDetailPage({
     messages = result.messages;
   }
 
+  // Determine deadline for this user
+  let deadline: string | null = null;
+  let deadlinePassed = false;
+  let deadlineSoon = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("class_standing")
+      .eq("id", user.id)
+      .single();
+
+    const standing: ClassStanding | null = profile?.class_standing ?? null;
+    deadline =
+      standing === "lowerclassman"
+        ? team.lowerclassman_deadline
+        : team.upperclassman_deadline;
+
+    if (deadline) {
+      const deadlineDate = new Date(deadline);
+      const now = new Date();
+      deadlinePassed = now > deadlineDate;
+      const threeDays = 3 * 24 * 60 * 60 * 1000;
+      deadlineSoon = !deadlinePassed && deadlineDate.getTime() - now.getTime() < threeDays;
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -107,6 +133,22 @@ export default async function TeamDetailPage({
             Visit website <ExternalLink className="size-3" />
           </a>
         )}
+        {deadline && (
+          <p
+            className={`mt-2 flex items-center gap-1.5 text-sm ${
+              deadlinePassed
+                ? "text-destructive"
+                : deadlineSoon
+                  ? "text-orange-600 dark:text-orange-400"
+                  : "text-muted-foreground"
+            }`}
+          >
+            <Clock className="size-3.5" />
+            {deadlinePassed
+              ? "Applications closed"
+              : `Applications due ${new Date(deadline).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}`}
+          </p>
+        )}
       </div>
 
       <Card>
@@ -125,13 +167,7 @@ export default async function TeamDetailPage({
           )}
         </CardHeader>
         <CardContent>
-          {user ? (
-            <ApplicationForm
-              teamId={id}
-              questions={questions}
-              existingApplication={existingApp}
-            />
-          ) : (
+          {!user ? (
             <div className="text-center py-6">
               <p className="text-muted-foreground mb-4">
                 Sign in to apply to this team.
@@ -140,6 +176,16 @@ export default async function TeamDetailPage({
                 <Link href="/login">Sign In</Link>
               </Button>
             </div>
+          ) : deadlinePassed && (!existingApp || existingApp.status === "draft") ? (
+            <p className="py-6 text-center text-muted-foreground">
+              The application deadline has passed.
+            </p>
+          ) : (
+            <ApplicationForm
+              teamId={id}
+              questions={questions}
+              existingApplication={existingApp}
+            />
           )}
         </CardContent>
       </Card>

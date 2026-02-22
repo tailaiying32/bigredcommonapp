@@ -9,6 +9,8 @@ export type TeamRole = "admin" | "reviewer";
 
 export type SenderType = "team" | "applicant";
 
+export type ClassStanding = "lowerclassman" | "upperclassman";
+
 export type TeamQuestion = {
   id: string;
   label: string;
@@ -34,6 +36,7 @@ export type Database = {
           netid: string;
           email: string;
           full_name: string;
+          class_standing: Database["public"]["Enums"]["class_standing"] | null;
           major: string | null;
           grad_year: number | null;
           gpa: number | null;
@@ -46,6 +49,7 @@ export type Database = {
           netid: string;
           email: string;
           full_name: string;
+          class_standing?: Database["public"]["Enums"]["class_standing"] | null;
           major?: string | null;
           grad_year?: number | null;
           gpa?: number | null;
@@ -58,6 +62,7 @@ export type Database = {
           netid?: string;
           email?: string;
           full_name?: string;
+          class_standing?: Database["public"]["Enums"]["class_standing"] | null;
           major?: string | null;
           grad_year?: number | null;
           gpa?: number | null;
@@ -77,6 +82,8 @@ export type Database = {
           custom_questions: Json;
           owner_id: string | null;
           logo_url: string | null;
+          upperclassman_deadline: string | null;
+          lowerclassman_deadline: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -89,6 +96,8 @@ export type Database = {
           custom_questions?: Json;
           owner_id?: string | null;
           logo_url?: string | null;
+          upperclassman_deadline?: string | null;
+          lowerclassman_deadline?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -101,6 +110,8 @@ export type Database = {
           custom_questions?: Json;
           owner_id?: string | null;
           logo_url?: string | null;
+          upperclassman_deadline?: string | null;
+          lowerclassman_deadline?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -198,6 +209,7 @@ export type Database = {
       application_status: ApplicationStatus;
       team_role: TeamRole;
       sender_type: SenderType;
+      class_standing: ClassStanding;
     };
     CompositeTypes: {
       [_ in never]: never;

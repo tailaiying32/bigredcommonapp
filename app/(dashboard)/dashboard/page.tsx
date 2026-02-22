@@ -57,43 +57,47 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Welcome, {profile.full_name}</h1>
+        <h1 className="text-3xl font-bold">Welcome, {profile.full_name.split(" ")[0]}</h1>
         <p className="mt-2 text-muted-foreground">
           Browse project teams and submit applications from your dashboard.
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Browse Teams</CardTitle>
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-1 flex-col">
             <CardDescription className="mb-3">
               Explore Cornell project teams and find the right fit.
             </CardDescription>
-            <Button asChild size="sm">
-              <Link href="/teams">View Teams</Link>
-            </Button>
+            <div className="mt-auto">
+              <Button asChild size="sm">
+                <Link href="/teams">View Teams</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               My Applications
             </CardTitle>
             <FileText className="size-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{appCount ?? 0}</div>
+          <CardContent className="flex flex-1 flex-col">
             <CardDescription className="mb-3">
+              <span className="font-bold text-foreground">{appCount ?? 0}</span>{" "}
               application{(appCount ?? 0) !== 1 ? "s" : ""} submitted
             </CardDescription>
-            <Button asChild size="sm" variant="outline">
-              <Link href="/applications">View Applications</Link>
-            </Button>
+            <div className="mt-auto">
+              <Button asChild size="sm" variant="outline">
+                <Link href="/applications">View Applications</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

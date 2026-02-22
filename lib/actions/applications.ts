@@ -5,7 +5,41 @@ import { createClient } from "@/lib/supabase/server";
 import { buildApplicationSchema } from "@/lib/validations/application";
 import { sendEmail } from "@/lib/email/ses";
 import { statusChangeEmail } from "@/lib/email/templates";
-import type { TeamQuestion } from "@/types/database";
+import type { TeamQuestion, ClassStanding } from "@/types/database";
+
+async function checkDeadline(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  teamId: string,
+  userId: string
+): Promise<string | null> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("class_standing")
+    .eq("id", userId)
+    .single();
+
+  const standing: ClassStanding | null = profile?.class_standing ?? null;
+
+  const { data: team } = await supabase
+    .from("teams")
+    .select("upperclassman_deadline, lowerclassman_deadline")
+    .eq("id", teamId)
+    .single();
+
+  if (!team) return null;
+
+  // Use the relevant deadline based on standing; default to upperclassman if unknown
+  const deadline =
+    standing === "lowerclassman"
+      ? team.lowerclassman_deadline
+      : team.upperclassman_deadline;
+
+  if (deadline && new Date() > new Date(deadline)) {
+    return "The application deadline has passed";
+  }
+
+  return null;
+}
 
 export async function createApplication(
   teamId: string,
@@ -18,6 +52,11 @@ export async function createApplication(
 
   if (!user) {
     return { error: "Not authenticated" };
+  }
+
+  const deadlineError = await checkDeadline(supabase, teamId, user.id);
+  if (deadlineError) {
+    return { error: deadlineError };
   }
 
   const { data, error } = await supabase
@@ -92,6 +131,11 @@ export async function submitApplication(
 
   if (fetchError || !app) {
     return { error: "Application not found or already submitted" };
+  }
+
+  const deadlineError = await checkDeadline(supabase, app.team_id, user.id);
+  if (deadlineError) {
+    return { error: deadlineError };
   }
 
   // Validate answers against required questions

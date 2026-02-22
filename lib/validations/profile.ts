@@ -14,6 +14,9 @@ export const profileSchema = z.object({
     .string()
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be at most 100 characters"),
+  class_standing: z.enum(["lowerclassman", "upperclassman"], {
+    message: "Please select your class standing",
+  }),
   major: z.string().optional(),
   grad_year: z
     .number()
