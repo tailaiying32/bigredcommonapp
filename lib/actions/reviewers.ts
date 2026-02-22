@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export async function addReviewer(teamId: string, identifier: string) {
   const supabase = await createClient();
@@ -27,7 +27,7 @@ export async function addReviewer(teamId: string, identifier: string) {
 
   // Look up the profile by NetID or email (admin client bypasses RLS)
   const isEmail = identifier.includes("@");
-  const { data: profile } = await supabaseAdmin
+  const { data: profile } = await getSupabaseAdmin()
     .from("profiles")
     .select("id, netid, full_name")
     .eq(isEmail ? "email" : "netid", identifier)

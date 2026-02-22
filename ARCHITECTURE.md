@@ -192,3 +192,23 @@ Teams and applicants communicate through per-application message threads. Sendin
 - [x] Display deadline on team detail page
 - [x] Auto-disable application form after deadline passes
 - [x] "Applications close in X days" badge on team cards
+
+### Phase 5: Applicant Notes (COMPLETE)
+
+Internal notes system so team admins and reviewers can keep per-applicant notes directly on the platform, replacing fragmented Google Drive docs.
+
+#### 5a. Notes Backend
+- [x] `notes` table: `id`, `application_id` (FK), `author_id` (FK), `body` (TEXT), `created_at`, `updated_at`
+- [x] RLS: only team owner and reviewers can read/write notes for their team's applications
+- [x] Server actions: `addNote(applicationId, body)`, `updateNote(noteId, body)`, `deleteNote(noteId)`
+
+#### 5b. Notes UI — Application Detail Page
+- [x] Notes section on admin application detail page (below messages)
+- [x] Add note form (textarea + submit button)
+- [x] List of existing notes with author name, timestamp, and body
+- [x] Edit/delete own notes (inline editing)
+- [x] Reviewers can add and view notes but not delete others' notes
+
+#### 5c. Notes Indicators
+- [x] Note count badge on applications table (alongside message count)
+- [x] "X notes" indicator on application row in admin dashboard

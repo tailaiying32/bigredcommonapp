@@ -198,6 +198,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      notes: {
+        Row: {
+          id: string;
+          application_id: string;
+          author_id: string;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          application_id: string;
+          author_id: string;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          application_id?: string;
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -223,3 +250,4 @@ export type Team = Database["public"]["Tables"]["teams"]["Row"];
 export type TeamMember = Database["public"]["Tables"]["team_members"]["Row"];
 export type Application = Database["public"]["Tables"]["applications"]["Row"];
 export type Message = Database["public"]["Tables"]["messages"]["Row"];
+export type Note = Database["public"]["Tables"]["notes"]["Row"];

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { messageSchema } from "@/lib/validations/message";
 import { sendEmail } from "@/lib/email/ses";
 import { teamMessageEmail, applicantMessageEmail } from "@/lib/email/templates";
@@ -108,7 +108,7 @@ export async function sendMessage(applicationId: string, body: string) {
       const recipients: string[] = [];
 
       // Get team owner email from auth.users (team accounts have no profile)
-      const { data: ownerData } = await supabaseAdmin.auth.admin.getUserById(
+      const { data: ownerData } = await getSupabaseAdmin().auth.admin.getUserById(
         team.owner_id
       );
       if (ownerData?.user?.email) {

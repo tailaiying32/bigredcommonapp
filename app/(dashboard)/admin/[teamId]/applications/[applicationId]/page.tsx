@@ -3,7 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/applications/status-badge";
 import { StatusChanger } from "@/components/admin/status-changer";
 import { MessageThread } from "@/components/messages/message-thread";
+import { NotesPanel } from "@/components/admin/notes-panel";
+import type { NoteWithAuthor } from "@/components/admin/notes-panel";
 import { getMessages } from "@/lib/actions/messages";
+import { getNotes } from "@/lib/actions/notes";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
   Card,
   CardContent,
@@ -93,8 +97,41 @@ export default async function ReviewApplicationPage({
   const questions = team.custom_questions as unknown as TeamQuestion[];
   const answers = app.answers as Record<string, string>;
 
-  // Fetch messages
+  // Fetch messages and notes
   const { messages } = await getMessages(app.id);
+  const { notes } = await getNotes(app.id);
+
+  // Resolve author names for notes
+  const authorIds = [...new Set(notes.map((n) => n.author_id))];
+  const authorNameMap = new Map<string, string>();
+
+  if (authorIds.length > 0) {
+    // Fetch profiles for reviewers
+    const { data: authorProfiles } = await getSupabaseAdmin()
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", authorIds);
+
+    for (const p of authorProfiles ?? []) {
+      authorNameMap.set(p.id, p.full_name ?? "Unknown");
+    }
+
+    // For authors without a profile (team owner accounts), fall back to "Team"
+    for (const id of authorIds) {
+      if (!authorNameMap.has(id)) {
+        authorNameMap.set(id, "Team");
+      }
+    }
+  }
+
+  const notesWithAuthors: NoteWithAuthor[] = notes.map((n) => ({
+    id: n.id,
+    body: n.body,
+    author_id: n.author_id,
+    author_name: authorNameMap.get(n.author_id) ?? "Unknown",
+    created_at: n.created_at,
+    updated_at: n.updated_at,
+  }));
 
   return (
     <div className="space-y-6">
@@ -197,6 +234,23 @@ export default async function ReviewApplicationPage({
             currentUserId={user.id}
             canSend={isOwner}
             initialMessages={messages}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Notes</CardTitle>
+          <CardDescription>
+            Internal notes visible to all team members.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotesPanel
+            applicationId={app.id}
+            currentUserId={user.id}
+            initialNotes={notesWithAuthors}
           />
         </CardContent>
       </Card>

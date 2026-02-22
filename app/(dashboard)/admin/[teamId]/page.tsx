@@ -1,10 +1,11 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { ApplicationsTable } from "@/components/admin/applications-table";
 import { ReviewerManager } from "@/components/admin/reviewer-manager";
 import { DeadlineManager } from "@/components/admin/deadline-manager";
 import { getMessageCounts } from "@/lib/actions/messages";
+import { getNoteCounts } from "@/lib/actions/notes";
 import {
   Card,
   CardContent,
@@ -98,7 +99,11 @@ export default async function AdminDashboardPage({
     (profiles ?? []).map((p) => [p.id, p])
   );
 
-  const messageCounts = await getMessageCounts(appRows.map((a) => a.id));
+  const appIds = appRows.map((a) => a.id);
+  const [messageCounts, noteCounts] = await Promise.all([
+    getMessageCounts(appIds),
+    getNoteCounts(appIds),
+  ]);
 
   const apps = appRows.map((a) => ({
     id: a.id,
@@ -107,19 +112,20 @@ export default async function AdminDashboardPage({
     updated_at: a.updated_at,
     profile: profileMap.get(a.student_id) ?? null,
     message_count: messageCounts[a.id] ?? 0,
+    note_count: noteCounts[a.id] ?? 0,
   }));
 
   // Fetch reviewer profiles (owner only)
   let reviewers: { id: string; netid: string | null; full_name: string | null }[] = [];
   if (isOwner) {
-    const { data: members } = await supabaseAdmin
+    const { data: members } = await getSupabaseAdmin()
       .from("team_members")
       .select("user_id")
       .eq("team_id", teamId);
 
     const reviewerIds = (members ?? []).map((m) => m.user_id);
     if (reviewerIds.length > 0) {
-      const { data: reviewerProfiles } = await supabaseAdmin
+      const { data: reviewerProfiles } = await getSupabaseAdmin()
         .from("profiles")
         .select("id, netid, full_name")
         .in("id", reviewerIds);

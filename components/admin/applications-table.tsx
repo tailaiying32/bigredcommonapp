@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, StickyNote } from "lucide-react";
 import type { ApplicationStatus } from "@/types/database";
 
 interface AppRow {
@@ -34,6 +34,7 @@ interface AppRow {
     email: string;
   } | null;
   message_count: number;
+  note_count: number;
 }
 
 const STATUS_OPTIONS = [
@@ -132,12 +133,20 @@ export function ApplicationsTable({
                   {new Date(app.updated_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                  {app.message_count > 0 && (
-                    <Badge variant="secondary" className="gap-1">
-                      <MessageSquare className="size-3" />
-                      {app.message_count}
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {app.message_count > 0 && (
+                      <Badge variant="secondary" className="gap-1">
+                        <MessageSquare className="size-3" />
+                        {app.message_count}
+                      </Badge>
+                    )}
+                    {app.note_count > 0 && (
+                      <Badge variant="secondary" className="gap-1">
+                        <StickyNote className="size-3" />
+                        {app.note_count}
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Link

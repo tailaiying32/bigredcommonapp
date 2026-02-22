@@ -148,6 +148,32 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Footer */}
+      <footer className="bg-primary px-4 py-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 sm:flex-row sm:justify-between">
+          <div className="flex items-center gap-4">
+            <Image
+              src="/Cornell_University_Logo.png"
+              alt="Cornell University"
+              width={64}
+              height={64}
+              className="h-14 w-auto"
+            />
+            <div className="h-14 w-px bg-white/40" />
+            <Image
+              src="/CornellDuffieldEngineering_Stacked_Logo_No_Seal_White.png"
+              alt="Cornell Duffield Engineering"
+              width={160}
+              height={80}
+              className="h-14 w-auto"
+            />
+          </div>
+          <p className="text-sm text-white/60">
+            &copy; 2026 Tailai Ying
+          </p>
+        </div>
+      </footer>
+
     </div>
   );
 }
